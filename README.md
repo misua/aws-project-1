@@ -8,25 +8,22 @@ The goal of this project is to demonstrate DevOps practices by automating the de
 
 ## Architecture Diagram
 
-```
-+-------------------+        +-------------------+        +-------------------+
-|   Internet Gateway| <----> |   Public Subnet   | <----> |   Bastion Host    |
-+-------------------+        +-------------------+        +-------------------+
-                                    | NAT Instance      |        (Public IP, SSH)
-                                    +-------------------+
-                                    | (t2.micro, IP forwarding)
-                                    |
-                                    v
-+-------------------+        +-------------------+        +-------------------+
-|   Private Subnet  | <----> |   App EC2 Instance| <----> |   Docker App      |
-+-------------------+        +-------------------+        +-------------------+
-                                    | (t2.micro, Private IP)       (nginxdemos/hello)
-                                    |
-                                    v
-+-------------------+        +-------------------+
-|   S3 Bucket (Logs)| <----> |   IAM Role (S3 Access) |
-+-------------------+        +-------------------+
- (Versioning, No Public Access)      (Least Privilege)
+```mermaid
+graph LR
+    Internet Gateway -->|Public Access| Public Subnet
+    Public Subnet -->|Hosts| Bastion Host
+    Bastion Host -->|Public IP, SSH| Public Subnet
+    Public Subnet -->|Hosts| NAT Instance
+    NAT Instance -->|t2.micro, IP forwarding| Public Subnet
+    NAT Instance -->|Routes traffic to| Private Subnet
+    Private Subnet -->|Hosts| App EC2 Instance
+    App EC2 Instance -->|t2.micro, Private IP| Private Subnet
+    App EC2 Instance -->|Runs| Docker App
+    Docker App -->|nginxdemos/hello| App EC2 Instance
+    App EC2 Instance -->|Stores logs| S3 Bucket Logs
+    S3 Bucket Logs -->|Versioning, No Public Access| App EC2 Instance
+    App EC2 Instance -->|Access via| IAM Role S3 Access
+    IAM Role S3 Access -->|Least Privilege| App EC2 Instance
 ```
 
 ## Prerequisites

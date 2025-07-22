@@ -68,5 +68,6 @@ resource "aws_key_pair" "ssh_key" {
 resource "aws_route" "private_nat_route" {
   route_table_id         = var.private_route_table_id
   destination_cidr_block = "0.0.0.0/0"
-  instance_id            = aws_instance.nat.id
+  network_interface_id   = aws_instance.nat.primary_network_interface_id
+  depends_on             = [aws_instance.nat]
 }
