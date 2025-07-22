@@ -40,21 +40,28 @@ resource "aws_instance" "app" {
   user_data = <<-EOF
               #!/bin/bash
               yum update -y
-              amazon-linux-extras install docker -y
-              systemctl enable docker
-              systemctl start docker
+              yum install -y docker
+              service docker start
               usermod -a -G docker ec2-user
-              # Create a script to pull and run the Docker container on boot
-              cat > /usr/local/bin/start-app.sh << 'SCRIPT'
-              #!/bin/bash
+              chkconfig docker on
               docker pull nginxdemos/hello
-              docker run -d -p 80:80 --restart always nginxdemos/hello
-              SCRIPT
-              chmod +x /usr/local/bin/start-app.sh
-              # Add to crontab to run on reboot
-              echo "@reboot /usr/local/bin/start-app.sh" | crontab -
-              # Run it now
-              /usr/local/bin/start-app.sh
+              docker run -d -p 80:80 --restart always --name web-app nginxdemos/hello
+              
+              # Create a script to upload Docker logs to S3
+              cat > /home/ec2-user/upload_logs_to_s3.sh << 'EOL'
+              #!/bin/bash
+              CONTAINER_ID=$(docker ps -qf "name=web-app")
+              LOG_FILE="/tmp/web-app-logs-$(date +%F-%H-%M-%S).log"
+              docker logs "$CONTAINER_ID" > "$LOG_FILE" 2>&1
+              aws s3 cp "$LOG_FILE" s3://aws-devops-project-logs/web-app-logs/
+              rm "$LOG_FILE"
+              EOL
+              
+              # Make the script executable
+              chmod +x /home/ec2-user/upload_logs_to_s3.sh
+              
+              # Schedule the script to run every hour via cron
+              echo "0 * * * * /home/ec2-user/upload_logs_to_s3.sh" | crontab -
               EOF
 
   tags = {
