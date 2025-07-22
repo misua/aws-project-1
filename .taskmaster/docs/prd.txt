@@ -1,0 +1,71 @@
+# DevOps Interview Assignment PRD
+
+## Objective
+Provision a fully working infrastructure on AWS, deploy a simple Dockerized web application, and ensure secure access — all using Terraform and within AWS Free Tier limits.
+
+## Scope & Requirements
+You are tasked with provisioning an environment to run a simple containerized web application on AWS using Terraform and Docker.
+
+### Part 1: Infrastructure (Terraform)
+Provision the following:
+1. **VPC**
+   - 1 public subnet
+   - 1 private subnet
+   - Route tables configured
+   - Internet Gateway for the public subnet
+   - (Optional but encouraged): NAT instance for private subnet (t2.micro)
+   - Do not use NAT Gateway (not Free Tier)
+2. **Bastion Host**
+   - EC2 (Amazon Linux 2, t2.micro) in the public subnet
+   - Accessible via SSH from your home IP using id_ed25519.pub
+3. **App EC2 Instance**
+   - EC2 (Amazon Linux 2, t2.micro) in the private subnet
+   - Configured with Docker
+   - Runs a sample web app container (see Part 2)
+   - Pull Docker image from Docker Hub or install locally
+   - SSH access using id_ed25519.pub
+4. **S3 Bucket**
+   - Used to simulate log storage
+   - Versioning enabled, public access blocked
+5. **IAM Roles**
+   - Instance profile with S3 access attached to the app EC2 instance
+6. **Terraform Outputs**
+   - Bastion public IP
+   - S3 bucket name
+   - App EC2 private IP
+
+### Part 2: Dockerized App Deployment
+Deploy a simple Docker web app to the EC2 instance in the private subnet.
+- Use a basic Flask, Node.js, or Nginx Hello World app in a Dockerfile (or pull an existing image like nginxdemos/hello)
+- Ensure it runs on port 80 in the container
+- Instructions must include:
+  - SSH into the bastion, then into the private instance
+  - Use UserData or an install script to:
+    - Install Docker
+    - Pull/run the Docker image
+    - Persist across reboot
+
+### Deliverables
+1. **Terraform Template**
+   - YAML or HCL format
+   - Uses variables and outputs
+2. **Docker App**
+   - Dockerfile and/or Docker Compose (if applicable)
+   - App code if it's custom (optional)
+3. **README.md**
+   - Architecture diagram (ASCII or image)
+   - Deploy instructions: `terraform apply ...`
+   - SSH tunnel instructions to access the app via the bastion (e.g., `ssh -L 8080:PRIVATE_IP:80`)
+   - Design and security decisions
+   - Notes on Free Tier use
+   - Cleanup instructions
+4. **Test Script**
+   - Script to verify all components are working as expected
+
+### Evaluation Criteria
+- **AWS Terraform**: Reusable, secure, parameterized template
+- **Docker Knowledge**: Proper build/run/use of Docker in EC2
+- **Networking & Security**: Correct SSH access flow, subnet configuration, least privilege IAM roles
+- **Documentation**: Clear, complete, and accurate README with working access instructions
+- **Free Tier Awareness**: Correct use of Free Tier resources (EC2 t2.micro, S3, no NAT Gateway, etc.)
+- **Application Deployment**: App runs on EC2 using Docker, via UserData or script
